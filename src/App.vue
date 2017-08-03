@@ -37,6 +37,9 @@ export default {
     padding: 0;
     list-style: none;
   }
+  a{
+    font-size: 18px;
+  }
   // 头部样式
   .header {
     position: absolute;
