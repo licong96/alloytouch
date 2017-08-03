@@ -8,7 +8,7 @@
       <ul ref="target">
         <li class="li" v-for="(item, index) in data">{{index}}</li>
 
-        <div class="foot-load" v-show="foodshow">
+        <div class="foot-load">
           <span><i class="fa fa-spinner fa-pulse"></i>{{message}}</span>
         </div>
       </ul>
@@ -25,9 +25,12 @@
       return {
         data: 30,
         message: '上拉加载更多数据',
-        loadTime: true,
-        foodshow: false
+        loadTime: true
       }
+    },
+    created() {
+      this.alloyTouch = null
+      this.loading = false
     },
     mounted () {
       let self = this
@@ -35,52 +38,38 @@
 
       Transform(target, true)
 
-      var obj = new AlloyTouch({
+      this.alloyTouch = new AlloyTouch({
         touch: this.$refs.touch, // 反馈触摸的dom
         vertical: true, // 不必需，默认是true代表监听竖直方向touch
         target: target, // 运动的对象
         property: 'translateY',  // 被滚动的属性
         sensitivity: 1, // 不必需,触摸区域的灵敏度，默认值为1，可以为负数
         factor: 1,  // 不必需,默认值是1代表touch区域的1px的对应target.y的1
-        min: window.innerHeight - target.clientHeight - 40,   // 不必需,滚动属性的最小值
+        min: window.innerHeight - target.clientHeight - 40 - 40,   // 不必需,滚动属性的最小值
         max: 0,   // 不必需,滚动属性的最大值
         step: 40,
         initialValue: 0, // 初始值
         change: function (value) {
-          // console.log(value)
-        },
-        touchMove: function (evt, value) {
-          if (value < this.min - 50) {
-            self.foodshow = true
-          } else {
-            self.foodshow = false
+          if (value <= this.min + 5 && !self.loading) {   // 下拉加载更多
+            self.loading = true
+            self.loadMore()
           }
         },
-        touchEnd: function (evt, value) {
-          if (value < this.min - 50 && self.loadTime) {
-            self.foodshow = true
-            this.to(this.min - 50)
-            self.loadTime = false
-            self.ajax(this)
-            return false
-          }
-        },
-        animationEnd: function (value) {
-          // console.log(value)
+        touchStart: function (evt, value) {
+          self.reastMin()
         }
       })
-      obj.to(0)
     },
     methods: {
-      ajax(at) {
-        let self = this
-        setTimeout(function () {
-          self.data += 5
-          // at.to(this.min)
-          at.min -= 41 * 5
-          self.loadTime = true
-          self.foodshow = false
-        }, 2000)
+      loadMore() {
+        setTimeout(() => {
+          this.data += 10
+          this.loading = false
+          this.reastMin()
+        }, 1000)
+      },
+      reastMin() {    // 计算min高度
+        this.alloyTouch.min = window.innerHeight - this.$refs.target.clientHeight - 40 - 40
       },
       back() {
         this.$router.back()
@@ -112,24 +101,10 @@
       }
     }
     .foot-load {
-      position: absolute;
-      bottom: -30px;
-      left: 0;
+      margin-top: 15px;
       width: 100%;
       text-align: center;
       font-size: 14px;
-      animation: transY .3s;
-    }
-  }
-
-  @keyframes transY {
-    0% {
-      opacity: 0;
-      transform: translate3d(0, 50px, 0);
-    }
-    100% {
-      opacity: 1;
-      transform: translate3d(0, 0, 0);
     }
   }
 </style>
